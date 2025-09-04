@@ -178,6 +178,18 @@ const UploadSection = () => {
       return;
     }
 
+    // Validate URL format
+    try {
+      new URL(webUrl);
+    } catch {
+      toast({
+        title: "Invalid URL",
+        description: "Please enter a valid URL (e.g., https://example.com/article)",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsProcessing(true);
     toast({
       title: "AI Processing Started!",
@@ -186,7 +198,7 @@ const UploadSection = () => {
 
     setSourceType("web");
     setInputContent(webUrl);
-    const title = `Web Article Course: ${new URL(webUrl).hostname}`;
+    const title = `Web Article Course: ${new URL(webUrl).hostname.replace('www.', '')}`;
     setCourseTitle(title);
 
     const content = await generateCourseContent("web", webUrl, title);
@@ -194,6 +206,7 @@ const UploadSection = () => {
     setTimeout(() => {
       setIsProcessing(false);
       setShowCoursePreview(true);
+      setWebUrl(""); // Clear the input after successful submission
       toast({
         title: "AI Course Generated Successfully!",
         description: "Your web content has been transformed into an interactive course.",
@@ -214,6 +227,15 @@ const UploadSection = () => {
       return;
     }
 
+    if (textContent.trim().length < 50) {
+      toast({
+        title: "Content Too Short",
+        description: "Please enter at least 50 characters of content for better course generation.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsProcessing(true);
     toast({
       title: "AI Processing Started!",
@@ -222,7 +244,7 @@ const UploadSection = () => {
 
     setSourceType("text");
     setInputContent(textContent);
-    const title = courseTitle || "Custom Text Course";
+    const title = courseTitle.trim() || `Custom Course: ${textContent.substring(0, 30)}...`;
     setCourseTitle(title);
 
     const content = await generateCourseContent("text", textContent, title);
@@ -230,6 +252,8 @@ const UploadSection = () => {
     setTimeout(() => {
       setIsProcessing(false);
       setShowCoursePreview(true);
+      setTextContent(""); // Clear the input after successful submission
+      setCourseTitle(""); // Clear the title input
       toast({
         title: "AI Course Generated Successfully!",
         description: "Your text has been transformed into an interactive course.",
@@ -538,6 +562,11 @@ const UploadSection = () => {
                       value={webUrl}
                       onChange={(e) => setWebUrl(e.target.value)}
                       className="text-base h-12"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          handleWebUrlSubmit();
+                        }
+                      }}
                     />
                     <Button 
                       variant="hero" 
@@ -576,6 +605,11 @@ const UploadSection = () => {
                     value={courseTitle}
                     onChange={(e) => setCourseTitle(e.target.value)}
                     className="text-base h-12"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        document.getElementById('text-content')?.focus();
+                      }
+                    }}
                   />
                 </div>
                 
@@ -589,9 +623,14 @@ const UploadSection = () => {
                     value={textContent}
                     onChange={(e) => setTextContent(e.target.value)}
                     className="min-h-40 text-base"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && e.ctrlKey) {
+                        handleTextSubmit();
+                      }
+                    }}
                   />
                   <p className="text-sm text-muted-foreground">
-                    Transform any text content into a comprehensive learning experience
+                    Transform any text content into a comprehensive learning experience (Ctrl+Enter to submit)
                   </p>
                 </div>
 
